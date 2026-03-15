@@ -1,5 +1,7 @@
 # glsl-parser
 
+> 日本語のREADMEはこちらです: [README.ja.md](README.ja.md)
+
 A GLSL parser that takes tokens from [glsl-tokenizer](http://github.com/stackgl/glsl-tokenizer) and turns them into an AST.
 
 May either be used synchronously or as a stream.
@@ -45,6 +47,8 @@ console.log(ast)
 
 ## Nodes
 
+The parser supports the following node types:
+
 * `stmtlist`
 * `stmt`
 * `struct`
@@ -72,11 +76,8 @@ console.log(ast)
 
 ## Known Issues
 
-* because i am not smart enough to write a fully streaming parser, the current parser "cheats" a bit when it encounters a `expr` node! it actually waits until it has all the tokens it needs to build a tree for a given expression, then builds it and emits the constituent child nodes in the expected order. the `expr` parsing is heavily influenced by [crockford's tdop article](http://javascript.crockford.com/tdop/tdop.html). the rest of the parser is heavily influenced by fever dreams.
-
-* the parser might hit a state where it's looking at what *could be* an expression, or it could be a declaration -- that is, the statement starts with a previously declared `struct`. it'll opt to pretend it's a declaration, but that might not be the case -- it might be a user-defined constructor starting a statement!
-
-* "unhygenic" `#if` / `#endif` macros are completely unhandled at the moment, since they're a bit of a pain. if you've got unhygenic macros in your code, move the #if / #endifs to statement level, and have them surround wholly parseable code. this sucks, and i am sorry.
+* The parser has some limitations in handling "unhygienic" `#if` / `#endif` macros. These should be avoided, or the macros should be placed at the statement level to surround parseable code.
+* The parser may face some challenges in distinguishing between expressions and declarations when the statement starts with a previously declared `struct`.
 
 ## License
 
