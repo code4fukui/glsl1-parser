@@ -81,4 +81,4 @@ The parser supports the following node types:
 
 ## License
 
-MIT, see [LICENSE.md](LICENSE.md) for more details.
+MIT License — see [LICENSE](LICENSE).
