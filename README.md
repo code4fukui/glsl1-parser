@@ -1,94 +1,86 @@
 # glsl-parser
 
-![](http://img.shields.io/badge/stability-stable-green.svg?style=flat)
-![](http://img.shields.io/npm/v/glsl-parser.svg?style=flat)
-![](http://img.shields.io/npm/dm/glsl-parser.svg?style=flat)
-![](http://img.shields.io/npm/l/glsl-parser.svg?style=flat)
+[
+![npm version](https://badge.fury.io/js/glsl-parser.svg)
+](https://badge.fury.io/js/glsl-parser)
+[
+![license](https://img.shields.io/npm/l/glsl-parser.svg)
+](https://github.com/stackgl/glsl-parser/blob/master/LICENSE)
 
-A GLSL parser that takes tokens from
-[glsl-tokenizer](http://github.com/stackgl/glsl-tokenizer) and turns them into
-an AST.
+> 日本語のREADMEはこちらです: [README.ja.md](README.ja.md)
 
-May either be used synchronously or as a stream.
+A GLSL parser that converts a stream of tokens from [glsl-tokenizer](https://github.com/stackgl/glsl-tokenizer) into an Abstract Syntax Tree (AST).
 
-## API
+It can be used as a stream for parsing GLSL source on the fly, or synchronously for parsing a complete list of tokens.
 
-### `stream = require('glsl-parser/stream')`
+## Install
 
-Creates a GLSL parser stream, which emits nodes as they're parsed.
+```sh
+npm install glsl-parser
+```
 
-``` javascript
-var TokenStream = require('glsl-tokenizer/stream')
-var ParseStream = require('glsl-parser/stream')
-var fs = require('fs')
+## Usage
+
+### Streaming API
+
+The streaming API is ideal for parsing large files or for use in toolchains with other streaming modules.
+
+**`const ParseStream = require('glsl-parser/stream')`**
+
+Creates a GLSL parser stream. It's a transform stream that consumes tokens and emits AST nodes as they are fully parsed.
+
+```javascript
+const fs = require('fs')
+const TokenStream = require('glsl-tokenizer/stream')
+const ParseStream = require('glsl-parser/stream')
+
+const parser = ParseStream()
 
 fs.createReadStream('test.glsl')
   .pipe(TokenStream())
-  .pipe(ParseStream())
-  .on('data', function(x) {
-    console.log('ast of', x.type)
+  .pipe(parser)
+  .on('data', function(node) {
+    console.log('Parsed node of type:', node.type)
+  })
+  .on('end', function() {
+    // The full AST is available on the stream's `program` property
+    console.log(JSON.stringify(parser.program, null, 2))
   })
 ```
 
-### `ast = stream.program`
+**`parser.program`**
 
-The full program's AST, which will be updated with each incoming token.
+While the stream is running, you can access the `program` property on the parser instance to get the full AST of the code parsed so far.
 
-### `ast = require('glsl-parser/direct')(tokens)`
+### Synchronous API
 
-Synchronously parses an array of tokens from `glsl-tokenizer`.
+The synchronous API is simpler if you already have the full GLSL source in memory.
 
-``` javascript
-var TokenString = require('glsl-tokenizer/string')
-var ParseTokens = require('glsl-parser/direct')
-var fs = require('fs')
+**`const ParseTokens = require('glsl-parser/direct')`**
 
-var src = fs.readFileSync('test.glsl', 'utf8')
-var tokens = TokenString(src)
-var ast = ParseTokens(tokens)
+A function that synchronously parses an array of tokens from `glsl-tokenizer` and returns the complete AST.
 
-console.log(ast)
+```javascript
+const fs = require('fs')
+const TokenString = require('glsl-tokenizer/string')
+const ParseTokens = require('glsl-parser/direct')
+
+const src = fs.readFileSync('test.glsl', 'utf8')
+const tokens = TokenString(src)
+const ast = ParseTokens(tokens)
+
+console.log(JSON.stringify(ast, null, 2))
 ```
 
-## Nodes
+## AST Nodes
 
-* `stmtlist`
-* `stmt`
-* `struct`
-* `function`
-* `functionargs`
-* `decl`
-* `decllist`
-* `forloop`
-* `whileloop`
-* `if`
-* `expr`
-* `precision`
-* `comment`
-* `preprocessor`
-* `keyword`
-* `ident`
-* `return`
-* `continue`
-* `break`
-* `discard`
-* `do-while`
-* `binary`
-* `ternary`
-* `unary`
+The parser produces a tree of nodes. The `type` property of each node can be one of the following:
 
-## Known Issues
-
-* because i am not smart enough to write a fully streaming parser, the current parser "cheats" a bit when it encounters a `expr` node! it actually waits until it has all the tokens it needs to build a tree for a given expression, then builds it and emits the constituent child nodes in the expected order. the `expr` parsing is heavily influenced by [crockford's tdop article](http://javascript.crockford.com/tdop/tdop.html). the rest of the parser is heavily influenced by fever dreams.
-
-* the parser might hit a state where it's looking at what *could be* an expression, or it could be a declaration --
-that is, the statement starts with a previously declared `struct`. it'll opt to pretend it's a declaration, but that
-might not be the case -- it might be a user-defined constructor starting a statement!
-
-* "unhygenic" `#if` / `#endif` macros are completely unhandled at the moment, since they're a bit of a pain.
-if you've got unhygenic macros in your code, move the #if / #endifs to statement level, and have them surround
-wholly parseable code. this sucks, and i am sorry.
-
-## License
-
-MIT, see [LICENSE.md](LICENSE.md) for more details.
+*   `stmtlist`
+*   `stmt`
+*   `struct`
+*   `function`
+*   `functionargs`
+*   `decl`
+*   `decllist`
+*   `for
